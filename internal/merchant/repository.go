@@ -7,7 +7,7 @@ import (
 )
 
 type MerchantRepository interface {
-	GetMerchantByID(ctx context.Context, id string) (*Merchant, error)
+	GetMerchantByID(ctx context.Context, id uuid.UUID) (*Merchant, error)
 	Save(ctx context.Context, merchant *Merchant) error
 	Create(ctx context.Context, name, description string) (*Merchant, error)
 }

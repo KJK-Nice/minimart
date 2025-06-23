@@ -19,5 +19,5 @@ func NewMerchantUsecase(repo MerchantRepository) MerchantUsecase {
 }
 
 func (u *merchantUsecase) CreateMerchant(ctx context.Context, name, description string) (*Merchant, error) {
-	return u.repo.Save(ctx, name, description)
+	return u.repo.Create(ctx, name, description)
 }
