@@ -77,27 +77,27 @@ You can track your progress by checking off the items as you complete them.
 
 ## Phase 5: Deepening Domain-Driven Design (DDD)
 
-*   [ ] **Core DDD Concepts:**
-    *   [ ] **Entities:** Structs with a unique identity (e.g., `User`, `Merchant`, `Order`).
+*   [x] **Core DDD Concepts:**
+    *   [x] **Entities:** Structs with a unique identity (e.g., `User`, `Merchant`, `Order`).
     *   [ ] **Value Objects:** Structs without a unique identity, defined by their attributes (e.g., `Address`, `Money`).
-    *   [ ] **Aggregates:** A cluster of domain objects that can be treated as a single unit (e.g., an `Order` with its `OrderItems`).
-    *   [ ] **Repositories:** Mediate between the domain and data mapping layers (what you have started).
-    *   [ ] **Usecases/Services:** Encapsulate application-specific business logic (what you have started).
-*   [ ] **Refining the Modules:**
-    *   [ ] Review the `user` and `merchant` modules. Do they represent clear domain boundaries?
-    *   [ ] Implement the `order` module. What are the entities and aggregates?
-    *   [ ] Implement the `menu` module.
+    *   [x] **Aggregates:** A cluster of domain objects that can be treated as a single unit (e.g., an `Order` with its `OrderItems`).
+    *   [x] **Repositories:** Mediate between the domain and data mapping layers (what you have started).
+    *   [x] **Usecases/Services:** Encapsulate application-specific business logic (what you have started).
+*   [x] **Refining the Modules:**
+    *   [x] Review the `user` and `merchant` modules. Do they represent clear domain boundaries?
+    *   [x] Implement the `order` module. What are the entities and aggregates?
+    *   [x] Implement the `menu` module.
     *   [ ] Think about how the modules interact with each other.
 
 ## Phase 6: Event-Driven Architecture with a Message Broker
 
-*   [ ] **Message Broker Concepts:**
-    *   [ ] Understand the role of a message broker (e.g., decoupling services, asynchronous communication).
-    *   [ ] Learn about different messaging patterns (e.g., Pub/Sub).
-*   [ ] **Designing a Broker Interface:**
-    *   [ ] Define a generic interface for a message broker (`EventPublisher` and `EventSubscriber`). This is crucial for making the implementation interchangeable.
-*   [ ] **In-Memory Implementation:**
-    *   [ ] Create an `InMemoryMessageBroker` that implements the interface for development and testing.
+*   [x] **Message Broker Concepts:**
+    *   [x] Understand the role of a message broker (e.g., decoupling services, asynchronous communication).
+    *   [x] Learn about different messaging patterns (e.g., Pub/Sub).
+*   [x] **Designing a Broker Interface:**
+    *   [x] Define a generic interface for a message broker (`EventPublisher` and `EventSubscriber`). This is crucial for making the implementation interchangeable.
+*   [x] **In-Memory Implementation:**
+    *   [x] Create an `InMemoryMessageBroker` that implements the interface for development and testing.
 *   [ ] **Publishing Events:**
     *   [ ] Modify a use case (e.g., `UserUsecase.CreateUser`) to publish an event (e.g., `UserCreatedEvent`) after a successful operation.
 *   [ ] **Subscribing to Events:**
