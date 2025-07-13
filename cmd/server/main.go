@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"minimart/internal/merchant"
+	"minimart/internal/order"
 	"minimart/internal/user"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,6 +23,12 @@ func main() {
 	userUsecase := user.NewUserUsecase(userRepo)
 	userHandler := user.NewUserHandler(userUsecase)
 	userHandler.RegisterRoutes(app)
+
+	// Order module
+	orderRepo := order.NewInMemoryOrderRepository()
+	orderUsecase := order.NewOrderUsecase(orderRepo)
+	orderHandler := order.NewOrderHandler(orderUsecase)
+	orderHandler.RegisterRoutes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")

@@ -1,4 +1,4 @@
-package user
+package order
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,6 @@ var dbpool *pgxpool.Pool
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
-	// 1. Define the PostgreSQL container
 	pgContainer, err := postgres.Run(ctx,
 		"postgres:15-alpine",
 		postgres.WithDatabase("test-db"),
@@ -42,33 +42,23 @@ func TestMain(m *testing.M) {
 		log.Fatalf("could not start Postgres container: %s", err)
 	}
 
-	// 2. Set up a teardown function to be called when tests are done
 	defer func() {
 		if err := pgContainer.Terminate(ctx); err != nil {
 			log.Fatalf("could not terminate postgres container: %s", err)
 		}
 	}()
 
-	// 3. Get the connection URL for the PostgreSQL container
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	require.NoError(nil, err)
 
-	// 4. Create a connection pool to the PostgreSQL database
 	dbpool, err = pgxpool.New(ctx, connStr)
 	if err != nil {
 		log.Fatalf("could not connect to database: %s", err)
 	}
 
-	// 5. Run the database migrations
-	migrationsPath, _ := filepath.Abs("../../migrations/001_create_users_table.sql")
-	migrationSQL, err := os.ReadFile(migrationsPath)
-	if err != nil {
-		log.Fatalf("could not read migration file: %s", err)
-	}
-	_, err = dbpool.Exec(ctx, string(migrationSQL))
-	if err != nil {
-		log.Fatalf("could not run migrations: %s", err)
-	}
+	// --- Run Migrations in Order ---
+	runMigration(ctx, "../../migrations/001_create_users_table.sql")
+	runMigration(ctx, "../../migrations/002_create_orders_tables.sql")
 
 	// 6. Run the actual tests
 	exitCode := m.Run()
@@ -77,44 +67,59 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-func TestUserHandler_RegisterUser_Integration(t *testing.T) {
-	// 1. Arrange: Set up our application and dependencies
-	// userRepo := NewInMemoryUserRepository()
-	userRepo := NewPostgresUserRepository(dbpool)
-	userUsecase := NewUserUsecase(userRepo)
-	userHandler := NewUserHandler(userUsecase)
+func runMigration(ctx context.Context, filePath string) {
+	migrationsPath, _ := filepath.Abs(filePath)
+	migrationSQL, err := os.ReadFile(migrationsPath)
+	if err != nil {
+		log.Fatalf("could not read migration file: %s", err)
+	}
+	_, err = dbpool.Exec(ctx, string(migrationSQL))
+	if err != nil {
+		log.Fatalf("could not run migrations: %s", err)
+	}
+}
 
-	// Create a new Fiber app for testing
+func TestOrderHandler_PlaceOrder_Integration(t *testing.T) {
+	// Arrange
+	// 1. Setup the application using the real Postgres repository
+	orderRepo := NewPostgresOrderRepository(dbpool)
+	orderUsecase := NewOrderUsecase(orderRepo)
+	orderHandler := NewOrderHandler(orderUsecase)
+
 	app := fiber.New()
-	userHandler.RegisterRoutes(app)
+	orderHandler.RegisterRoutes(app)
 
-	// 2. Act: Create the HTTP request
-	// Create the request body
-	reqBody := map[string]string{
-		"name":  "Test User",
-		"email": "test@example.com",
+	// 2. Seed a user in ther database to act as ther customer
+	customerID := uuid.New()
+	_, err := dbpool.Exec(context.Background(), "INSERT INTO users (id, name, email) VALUES ($1, $2, $3);", customerID, "Test Customer", "customer@example.com")
+	require.NoError(t, err)
+
+	// Act
+	// 3. Create the HTTP request to place an order
+	reqBody := PlaceOrderRequest{
+		CustomerID: customerID,
+		Items: []OrderItem{
+			{MenuItemID: uuid.New(), Quantity: 2},
+			{MenuItemID: uuid.New(), Quantity: 1},
+		},
 	}
 	bodyBytes, _ := json.Marshal(reqBody)
-
-	// Create the POST request
-	req := httptest.NewRequest(http.MethodPost, "/users/register", bytes.NewReader(bodyBytes))
+	req := httptest.NewRequest(http.MethodPost, "/orders", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
 
-	// 3. Assert: Perform the request and check the response
-	// The app. Test function sends the request to the app and returns the response
+	// Assert
 	resp, err := app.Test(req)
 	require.NoError(t, err)
 
-	// Check the status code
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 
-	// Check the response body
-	repsBody, _ := io.ReadAll(resp.Body)
-	var createdUser User
-	err = json.Unmarshal(repsBody, &createdUser)
+	var createdOrder Order
+	respBody, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(respBody, &createdOrder)
 	require.NoError(t, err)
 
-	assert.NotEmpty(t, createdUser.ID, "Expected user ID to be generated")
-	assert.Equal(t, "Test User", createdUser.Name, "Expected user name to match")
-	assert.Equal(t, "test@example.com", createdUser.Email, "Expected user email to match")
+	assert.Equal(t, customerID, createdOrder.CustomerID)
+	assert.Len(t, createdOrder.Items, 2)
+	assert.Equal(t, NEW, createdOrder.Status)
+	assert.NotEmpty(t, createdOrder.ID)
 }

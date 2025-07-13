@@ -6,74 +6,74 @@ You can track your progress by checking off the items as you complete them.
 
 ## Phase 1: Go Fundamentals
 
-*   [ ] **Go Syntax and Basic Types:**
-    *   [ ] Variables, constants, and basic types (`string`, `int`, `float`, `bool`).
-    *   [ ] Pointers: Understand what they are and when to use them (`*` and `&`).
-    *   [ ] `fmt` package for printing and formatting.
-*   [ ] **Data Structures:**
-    *   [ ] Structs (similar to objects/classes in TS).
-    *   [ ] Slices (dynamic arrays).
-    *   [ ] Maps (key-value pairs).
-*   [ ] **Control Flow:**
-    *   [ ] `if/else` statements.
-    *   [ ] `for` loops (Go's only looping construct).
-    *   [ ] `switch` statements.
-*   [ ] **Functions:**
-    *   [ ] Defining functions.
-    *   [ ] Multiple return values.
-    *   [ ] Variadic functions.
-*   [ ] **Packages and Modules:**
-    *   [ ] Understanding `package main`.
-    *   [ ] Creating and importing your own packages (like you've done with `user`, `merchant`).
-    *   [ ] Go modules (`go.mod`, `go.sum`).
-*   [ ] **Error Handling:**
-    *   [ ] The `error` type.
-    *   [ ] Returning and checking for errors.
-*   [ ] **Interfaces:**
-    *   [ ] Understanding implicit interface implementation (a key difference from TS).
-    *   [ ] Defining and using interfaces to create abstractions.
+*   [x] **Go Syntax and Basic Types:**
+    *   [x] Variables, constants, and basic types (`string`, `int`, `float`, `bool`).
+    *   [x] Pointers: Understand what they are and when to use them (`*` and `&`).
+    *   [x] `fmt` package for printing and formatting.
+*   [x] **Data Structures:**
+    *   [x] Structs (similar to objects/classes in TS).
+    *   [x] Slices (dynamic arrays).
+    *   [x] Maps (key-value pairs).
+*   [x] **Control Flow:**
+    *   [x] `if/else` statements.
+    *   [x] `for` loops (Go's only looping construct).
+    *   [x] `switch` statements.
+*   [x] **Functions:**
+    *   [x] Defining functions.
+    *   [x] Multiple return values.
+    *   [x] Variadic functions.
+*   [x] **Packages and Modules:**
+    *   [x] Understanding `package main`.
+    *   [x] Creating and importing your own packages (like you've done with `user`, `merchant`).
+    *   [x] Go modules (`go.mod`, `go.sum`).
+*   [x] **Error Handling:**
+    *   [x] The `error` type.
+    *   [x] Returning and checking for errors.
+*   [x] **Interfaces:**
+    *   [x] Understanding implicit interface implementation (a key difference from TS).
+    *   [x] Defining and using interfaces to create abstractions.
 *   [ ] **Concurrency:**
     *   [ ] Goroutines (`go` keyword).
     *   [ ] Channels for communication between goroutines.
 
 ## Phase 2: Building the Web API with Fiber
 
-*   [ ] **Fiber Basics:**
-    *   [ ] Routing (`app.Get`, `app.Post`, etc.).
+*   [x] **Fiber Basics:**
+    *   [x] Routing (`app.Get`, `app.Post`, etc.).
     *   [ ] Route parameters, query parameters.
-    *   [ ] Handling JSON request bodies and responses.
-    *   [ ] Handlers and the `fiber.Ctx` context.
-*   [ ] **Structuring Your Fiber App:**
-    *   [ ] Grouping routes (`app.Group`).
-    *   [ ] Refactoring handlers into separate files (as you've started).
+    *   [x] Handling JSON request bodies and responses.
+    *   [x] Handlers and the `fiber.Ctx` context.
+*   [x] **Structuring Your Fiber App:**
+    *   [x] Grouping routes (`app.Group`).
+    *   [x] Refactoring handlers into separate files (as you've started).
 *   [ ] **Middleware:**
     *   [ ] Using built-in middleware (e.g., for logging, recovery).
     *   [ ] Writing your own custom middleware.
 
 ## Phase 3: Testing
 
-*   [ ] **Go's `testing` package:**
-    *   [ ] Writing unit tests (`_test.go` files).
-    *   [ ] Running tests (`go test ./...`).
-*   [ ] **Testing Strategies:**
-    *   [ ] **Unit Tests:** Test individual functions and methods in isolation (e.g., test a use case with a mock repository).
-    *   [ ] **Integration Tests:** Test the interaction between different parts of your application (e.g., test a handler all the way to the database).
-    *   [ ] Mocking dependencies using interfaces.
+*   [x] **Go's `testing` package:**
+    *   [x] Writing unit tests (`_test.go` files).
+    *   [x] Running tests (`go test ./...`).
+*   [x] **Testing Strategies:**
+    *   [x] **Unit Tests:** Test individual functions and methods in isolation (e.g., test a use case with a mock repository).
+    *   [x] **Integration Tests:** Test the interaction between different parts of your application (e.g., test a handler all the way to the database).
+    *   [x] Mocking dependencies using interfaces.
 
 ## Phase 4: Persistence with a Real Database
 
-*   [ ] **Choosing a Database and Driver:**
-    *   [ ] PostgreSQL is a great choice.
-    *   [ ] Select a Go driver (e.g., `pgx`) or an ORM (e.g., `GORM`, `sqlc`).
-*   [ ] **Connecting to the Database:**
-    *   [ ] Manage database connection strings.
-    *   [ ] Create a database connection pool.
-*   [ ] **Implementing Repositories:**
-    *   [ ] Replace the `InMemory...Repository` with a `Postgres...Repository`.
-    *   [ ] Implement the repository interfaces for `user` and `merchant`.
-    *   [ ] Write SQL queries (or use an ORM) to perform CRUD operations.
-*   [ ] **Database Migrations:**
-    *   [ ] Learn how to manage database schema changes over time (e.g., using a library like `golang-migrate/migrate`).
+*   [x] **Choosing a Database and Driver:**
+    *   [x] PostgreSQL is a great choice.
+    *   [x] Select a Go driver (e.g., `pgx`) or an ORM (e.g., `GORM`, `sqlc`).
+*   [x] **Connecting to the Database:**
+    *   [x] Manage database connection strings.
+    *   [x] Create a database connection pool.
+*   [x] **Implementing Repositories:**
+    *   [x] Replace the `InMemory...Repository` with a `Postgres...Repository`.
+    *   [x] Implement the repository interfaces for `user` and `merchant`.
+    *   [x] Write SQL queries (or use an ORM) to perform CRUD operations.
+*   [x] **Database Migrations:**
+    *   [x] Learn how to manage database schema changes over time (e.g., using a library like `golang-migrate/migrate`).
 
 ## Phase 5: Deepening Domain-Driven Design (DDD)
 

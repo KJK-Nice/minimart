@@ -27,3 +27,7 @@ const (
 	COMPLETED
 	CANCELLED
 )
+
+func (s OrderStatus) String() string {
+	return []string{"NEW", "PENDING", "COMPLETED", "CANCELLED"}[s]
+}
