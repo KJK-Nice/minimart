@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"minimart/internal/menu"
 	"minimart/internal/merchant"
 	"minimart/internal/order"
 	"minimart/internal/user"
@@ -29,6 +30,12 @@ func main() {
 	orderUsecase := order.NewOrderUsecase(orderRepo)
 	orderHandler := order.NewOrderHandler(orderUsecase)
 	orderHandler.RegisterRoutes(app)
+
+	// Menu module
+	menuRepo := menu.NewInMemoryMenuRepository()
+	menuUsecase := menu.NewMenuUsecase(menuRepo)
+	menuHandler := menu.NewMenuHandler(menuUsecase)
+	menuHandler.RegisterRoutes(app)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")

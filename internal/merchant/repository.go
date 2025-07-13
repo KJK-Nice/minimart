@@ -7,9 +7,8 @@ import (
 )
 
 type MerchantRepository interface {
-	GetMerchantByID(ctx context.Context, id uuid.UUID) (*Merchant, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*Merchant, error)
 	Save(ctx context.Context, merchant *Merchant) error
-	Create(ctx context.Context, name, description string) (*Merchant, error)
 }
 
 type InMemoryMerchantRepository struct {
@@ -39,7 +38,7 @@ func NewInMemoryMerchantRepository() *InMemoryMerchantRepository {
 	}
 }
 
-func (r *InMemoryMerchantRepository) GetMerchantByID(ctx context.Context, id uuid.UUID) (*Merchant, error) {
+func (r *InMemoryMerchantRepository) GetByID(ctx context.Context, id uuid.UUID) (*Merchant, error) {
 	merchant, exists := r.merchants[id]
 	if !exists {
 		return nil, nil
@@ -50,17 +49,4 @@ func (r *InMemoryMerchantRepository) GetMerchantByID(ctx context.Context, id uui
 func (r *InMemoryMerchantRepository) Save(ctx context.Context, merchant *Merchant) error {
 	r.merchants[merchant.ID] = merchant
 	return nil
-}
-
-func (r *InMemoryMerchantRepository) Create(ctx context.Context, name, description string) (*Merchant, error) {
-	id := uuid.New()
-	merchant := &Merchant{
-		ID:          id,
-		Name:        name,
-		Description: description,
-		IsActive:    true,
-	}
-
-	r.merchants[id] = merchant
-	return merchant, nil
 }
