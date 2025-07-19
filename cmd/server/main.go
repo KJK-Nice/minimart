@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"minimart/internal/menu"
 	"minimart/internal/merchant"
 	"minimart/internal/order"
+	"minimart/internal/shared/eventbus"
 	"minimart/internal/user"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,6 +15,21 @@ import (
 
 func main() {
 	app := fiber.New()
+
+	// Event bus
+	eventBus := eventbus.NewInMemoryEventBus()
+
+	// Simple subscriber for testing
+	err := eventBus.Subscribe(user.UserCreatedTopic, func(ctx context.Context, event eventbus.Event) error {
+		if userEvent, ok := event.(user.UserCreatedEvent); ok {
+			fmt.Printf("New user created: %+v\n", userEvent)
+		}
+		return nil
+
+	})
+	if err != nil {
+		log.Fatal("Failed to subscribe to user created event: %v", err)
+	}
 
 	// Merchant module
 	merchantRepo := merchant.NewInMemoryMerchantRepository()
@@ -21,7 +39,7 @@ func main() {
 
 	// User module
 	userRepo := user.NewInMemoryUserRepository()
-	userUsecase := user.NewUserUsecase(userRepo)
+	userUsecase := user.NewUserUsecase(userRepo, eventBus)
 	userHandler := user.NewUserHandler(userUsecase)
 	userHandler.RegisterRoutes(app)
 
