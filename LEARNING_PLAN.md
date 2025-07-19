@@ -32,8 +32,8 @@ You can track your progress by checking off the items as you complete them.
 *   [x] **Interfaces:**
     *   [x] Understanding implicit interface implementation (a key difference from TS).
     *   [x] Defining and using interfaces to create abstractions.
-*   [ ] **Concurrency:**
-    *   [ ] Goroutines (`go` keyword).
+*   [x] **Concurrency:**
+    *   [x] Goroutines (`go` keyword).
     *   [ ] Channels for communication between goroutines.
 
 ## Phase 2: Building the Web API with Fiber

@@ -2,6 +2,7 @@ package eventbus
 
 import (
 	"context"
+	"log"
 	"sync"
 )
 
@@ -30,13 +31,14 @@ func (b *InMemoryEventBus) Publish(ctx context.Context, event Event) error {
 	}
 
 	for _, handler := range handlers {
-		// In a production system, you might run these handlers in separate goroutines
-		// For an in-memory bus, sequential execution is simpler and safer.
-		if err := handler(ctx, event); err != nil {
-			// In a real system, you'd need a strategy for handling failed handlers
-			// (e.g., retry, dead-letter queue). Here, we'll just return the first error.
-			return err
-		}
+		// Run each handler in its own goroutine
+		go func(h Handler) {
+			// In a real system, you'd want more robust error handling,
+			// perhaps logging the error to a central service.
+			if err := h(ctx, event); err != nil {
+				log.Printf("Error handling event %s: %v", event.Topic(), err)
+			}
+		}(handler)
 	}
 	return nil
 }
