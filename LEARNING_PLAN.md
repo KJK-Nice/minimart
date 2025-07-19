@@ -102,7 +102,7 @@ You can track your progress by checking off the items as you complete them.
     *   [x] Modify a use case (e.g., `UserUsecase.CreateUser`) to publish an event (e.g., `UserCreatedEvent`) after a successful operation.
 *   [x] **Subscribing to Events:**
     *   [x] Create a simple subscriber for testing purposes.
-    *   [ ] Create a subscriber in a different module that listens for an event and performs an action (e.g., sending a welcome email).
+    *   [x] Create a subscriber in a different module that listens for an event and performs an action (e.g., sending a welcome email).
 *   [ ] **Integrating a Production Broker:**
     *   [ ] Choose a production-ready message broker (e.g., Redis Pub/Sub, Kafka).
     *   [ ] Add the necessary client library to `go.mod`.

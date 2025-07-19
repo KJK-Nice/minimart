@@ -1,11 +1,10 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"minimart/internal/menu"
 	"minimart/internal/merchant"
+	"minimart/internal/notifications"
 	"minimart/internal/order"
 	"minimart/internal/shared/eventbus"
 	"minimart/internal/user"
@@ -19,16 +18,10 @@ func main() {
 	// Event bus
 	eventBus := eventbus.NewInMemoryEventBus()
 
-	// Simple subscriber for testing
-	err := eventBus.Subscribe(user.UserCreatedTopic, func(ctx context.Context, event eventbus.Event) error {
-		if userEvent, ok := event.(user.UserCreatedEvent); ok {
-			fmt.Printf("New user created: %+v\n", userEvent)
-		}
-		return nil
-
-	})
+	userSubscriber := notifications.NewUserSubscriber()
+	err := eventBus.Subscribe(user.UserCreatedTopic, userSubscriber.HandleUserCreatedEvent)
 	if err != nil {
-		log.Fatal("Failed to subscribe to user created event: %v", err)
+		log.Fatalf("Failed to subscribe to user created event: %v", err)
 	}
 
 	// Merchant module
