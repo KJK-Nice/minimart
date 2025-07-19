@@ -34,7 +34,7 @@ You can track your progress by checking off the items as you complete them.
     *   [x] Defining and using interfaces to create abstractions.
 *   [x] **Concurrency:**
     *   [x] Goroutines (`go` keyword).
-    *   [ ] Channels for communication between goroutines.
+    *   [x] Channels for communication between goroutines.
 
 ## Phase 2: Building the Web API with Fiber
 
@@ -103,18 +103,18 @@ You can track your progress by checking off the items as you complete them.
 *   [x] **Subscribing to Events:**
     *   [x] Create a simple subscriber for testing purposes.
     *   [x] Create a subscriber in a different module that listens for an event and performs an action (e.g., sending a welcome email).
-*   [ ] **Integrating a Production Broker:**
-    *   [ ] Choose a production-ready message broker (e.g., Redis Pub/Sub, Kafka).
-    *   [ ] Add the necessary client library to `go.mod`.
-    *   [ ] Implement the message broker interface for your chosen broker (e.g., `RedisMessageBroker`).
-    *   [ ] Use configuration to switch between the in-memory and production broker implementations.
+*   [x] **Integrating a Production Broker:**
+    *   [x] Choose a production-ready message broker (e.g., Redis Pub/Sub, Kafka).
+    *   [x] Add the necessary client library to `go.mod`.
+    *   [x] Implement the message broker interface for your chosen broker (e.g., `RedisMessageBroker`).
+    *   [x] Use configuration to switch between the in-msmory and production broker implementations.
 
 ## Phase 7: Production-Ready Improvements
 
 *   [ ] **Configuration Management:**
     *   [ ] Use a library like `Viper` to handle configuration from files (e.g., `config.yaml`) and environment variables.
-*   [ ] **Structured Logging:**
-    *   [ ] Use a library like `slog` (standard library in Go 1.21+) or `zerolog` for structured, leveled logging.
+*   [x] **Structured Logging:**
+    *   [x] Use a library like `slog` (standard library in Go 1.21+) or `zerolog` for structured, leveled logging.
 *   [ ] **Authentication & Authorization:**
     *   [ ] Implement JWT-based authentication.
     *   [ ] Create middleware to protect routes.

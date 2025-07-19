@@ -3,19 +3,19 @@ package notifications
 import (
 	"context"
 	"fmt"
-
+	"log/slog"
 	"minimart/internal/shared/eventbus"
 	"minimart/internal/user"
 )
 
 // UserSubscriber is a dedicated subscriber for user-related events.
 type UserSubscriber struct {
-	// dependencies here. an email service, a logger, etc.
+	logger *slog.Logger
 }
 
 // NewUserSubscriber creates a new instance of UserSubscriber.
-func NewUserSubscriber() *UserSubscriber {
-	return &UserSubscriber{}
+func NewUserSubscriber(logger *slog.Logger) *UserSubscriber {
+	return &UserSubscriber{logger: logger}
 }
 
 // HandleUserCreatedEvent is the handler for the UserCreatedEvent.
@@ -23,12 +23,21 @@ func (s *UserSubscriber) HandleUserCreatedEvent(ctx context.Context, event event
 	// Type assert the event to the specifiic UserCreatedEvent
 	userEvent, ok := event.(user.UserCreatedEvent)
 	if !ok {
-		// This should not happen if the event bus is working correctly,
-		// but it's good practice to handle it.
-		return fmt.Errorf("unexpected event type: %T", event)
+		s.logger.Error(
+			"Unexpected event type received",
+			"module", "notifications",
+			"topic", event.Topic(),
+			"event_type", fmt.Sprintf("%T", event),
+		)
+		return nil
 	}
 
-	fmt.Printf("--> [Notifications] New user created: Name: %s, Email: %s\n", userEvent.Name, userEvent.Email)
+	s.logger.Info(
+		"New user created",
+		"module", "notifications",
+		"user_id", userEvent.UserID,
+		"email", userEvent.Email,
+	)
 
 	return nil
 }

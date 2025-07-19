@@ -1,0 +1,9 @@
+server:
+  port: 3000
+
+redis:
+  address: "localhost:6379"
+
+database:
+  user: "minimart"
+  dbname: "minimart_dev"
