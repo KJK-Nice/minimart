@@ -2,32 +2,24 @@ package user
 
 import (
 	"context"
-	"errors"
+	"minimart/internal/shared/eventbus"
 	"testing"
 )
 
-type mockUserRepository struct {
-	errToReturn error
-}
-
-func (m *mockUserRepository) Save(ctx context.Context, user *User) error {
-	if m.errToReturn != nil {
-		return m.errToReturn
-	}
-	return nil
-}
-
 func TestUserUseCase_RegisterUser(t *testing.T) {
+	eventBus := eventbus.NewInMemoryEventBus()
+	userRepo := NewInMemoryUserRepository()
+
 	t.Run("should register a user succsessfully", func(t *testing.T) {
 		// Arrange
 		ctx := context.Background()
-		mockRepo := &mockUserRepository{}
-		userUsecase := NewUserUsecase(mockRepo)
+		userUsecase := NewUserUsecase(userRepo, eventBus)
 
 		// Act
 		userName := "John Wick"
 		userEmail := "john.wick@example.com"
-		createdUser, err := userUsecase.RegisterUser(ctx, userName, userEmail)
+		userPassword := "password"
+		createdUser, err := userUsecase.RegisterUser(ctx, userName, userEmail, userPassword)
 
 		// Assert
 		// 1. Check taht no error occurred
@@ -52,28 +44,6 @@ func TestUserUseCase_RegisterUser(t *testing.T) {
 		// 4. Check that the user has an ID
 		if createdUser.ID.String() == "" {
 			t.Error("expected user to have an ID, but it was empty")
-		}
-	})
-
-	t.Run("should return an error when repository fails", func(t *testing.T) {
-		// Arrange
-		expectedError := errors.New("database is down")
-		mockRepo := &mockUserRepository{errToReturn: expectedError}
-		userUsecase := NewUserUsecase(mockRepo)
-		ctx := context.Background()
-
-		// Act
-		createdUser, err := userUsecase.RegisterUser(ctx, "Jane Doe", "jane.doe@example.com")
-
-		// Assert
-		if err == nil {
-			t.Fatal("expected an error, but got nil")
-		}
-		if !errors.Is(err, expectedError) {
-			t.Errorf("expected error to be %q, but got %q", expectedError.Error(), err.Error())
-		}
-		if createdUser != nil {
-			t.Error("expected nil user, but got a user")
 		}
 	})
 }

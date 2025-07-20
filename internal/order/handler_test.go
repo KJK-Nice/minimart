@@ -91,7 +91,7 @@ func TestOrderHandler_PlaceOrder_Integration(t *testing.T) {
 
 	// 2. Seed a user in ther database to act as ther customer
 	customerID := uuid.New()
-	_, err := dbpool.Exec(context.Background(), "INSERT INTO users (id, name, email) VALUES ($1, $2, $3);", customerID, "Test Customer", "customer@example.com")
+	_, err := dbpool.Exec(context.Background(), "INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4);", customerID, "Test Customer", "customer@example.com", "password")
 	require.NoError(t, err)
 
 	// Act
