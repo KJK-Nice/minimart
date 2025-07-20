@@ -10,11 +10,13 @@ import (
 	"minimart/internal/notifications"
 	"minimart/internal/order"
 	"minimart/internal/shared/eventbus"
+	"minimart/internal/shared/middleware"
 	"minimart/internal/user"
 	"os"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
@@ -95,6 +97,22 @@ func main() {
 	menuUsecase := menu.NewMenuUsecase(menuRepo)
 	menuHandler := menu.NewMenuHandler(menuUsecase)
 	menuHandler.RegisterRoutes(app)
+
+	api := app.Group("/api", middlerware.AuthRequire())
+
+	api.Get("/profile", func(c *fiber.Ctx) error {
+		// The middlerware has already validated the token and stored the user claims.
+		// We can safely access it from c.Locals.
+		userClaims := c.Locals("user").(jwt.MapClaims)
+
+		// You can now use the claims, for example, to fetch user details from the DB.
+		// For this example, we'll just return the claims.
+		return c.JSON(fiber.Map{
+			"message": "Welcome to your profile!",
+			"user_id": userClaims["sub"],
+			"email":   userClaims["email"],
+		})
+	})
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World!")
