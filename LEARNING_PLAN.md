@@ -111,13 +111,13 @@ You can track your progress by checking off the items as you complete them.
 
 ## Phase 7: Production-Ready Improvements
 
-*   [ ] **Configuration Management:**
-    *   [ ] Use a library like `Viper` to handle configuration from files (e.g., `config.yaml`) and environment variables.
+*   [x] **Configuration Management:**
+    *   [x] Use a library like `Viper` to handle configuration from files (e.g., `config.yaml`) and environment variables.
 *   [x] **Structured Logging:**
     *   [x] Use a library like `slog` (standard library in Go 1.21+) or `zerolog` for structured, leveled logging.
-*   [ ] **Authentication & Authorization:**
-    *   [ ] Implement JWT-based authentication.
-    *   [ ] Create middleware to protect routes.
+*   [x] **Authentication & Authorization:**
+    *   [x] Implement JWT-based authentication.
+    *   [x] Create middleware to protect routes.
 *   [ ] **Containerization:**
     *   [ ] Write a `Dockerfile` for your Go application.
     *   [ ] Improve your `docker-compose.yml` to run your Go application and a PostgreSQL database together.

@@ -1,4 +1,19 @@
 services:
+
+  # The Go application service
+  app:
+    build: . # Build the image from the Dockerfile in the currect directory
+    ports:
+      - "3000:3000" # Map host port 3000 to container port 3000
+    volumes:
+      - ./config.yaml:/app/config.yaml # Mount the config file into ther container
+    depends_on:
+      - redis # Ensure redis starts before the app
+    environment:
+      # You can override config values here if needed
+      - VIPER_SERVER_PORT=8080
+      - VIPER_REDIS_ADDRESS=redis:6379
+
   db:
     image: postgres:15
     environment:
