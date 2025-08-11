@@ -39,9 +39,6 @@ func main() {
 		logger.Info("No .env file found, continue without it")
 	}
 
-	viper.AddConfigPath(".")
-	viper.SetConfigName(".env")
-	viper.SetConfigType("env")
 	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()
