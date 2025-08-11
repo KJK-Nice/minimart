@@ -32,11 +32,11 @@ func AuthRequire() fiber.Handler {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// Check the signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fiber.NewError(fiber.StatusUnauthorized, "Unexpedted signing method")
+				return nil, fiber.NewError(fiber.StatusUnauthorized, "Unexpected signing method")
 			}
 
-			// Return the secret key
-			return []byte(viper.GetString("jwt.secret")), nil
+			// Return the secret key from environment variable
+			return []byte(viper.GetString("JWT_SECRET")), nil
 		})
 		if err != nil || !token.Valid {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
