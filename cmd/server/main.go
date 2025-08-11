@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -75,14 +76,14 @@ func main() {
 		"JwtSecret", "...", // Don't log the secret itself
 	)
 
-	dbpool, err := pgxpool.New(context.Background(), config.DatabaseURL)
+	// --- Run Database Migrations ---
+	migrationDb, err := sql.Open("pgx", config.DatabaseURL)
 	if err != nil {
-		logger.Error("Unable to connect to database", "error", err)
+		logger.Error("Failed to open database for migrations", "error", err)
 		os.Exit(1)
 	}
-	defer dbpool.Close()
+	defer migrationDb.Close()
 
-	// --- Run Database Migrations ---
 	goose.SetBaseFS(os.DirFS("."))
 	goose.SetLogger(goose.NopLogger()) // Disables goose's default logger
 	if err := goose.SetDialect("postgres"); err != nil {
@@ -90,16 +91,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Get a standard sql.DB connection from the pool
-	db := dbpool.Acquire(context.Background()).Conn().PgConn().Conn()
-	defer db.Close()
-
 	logger.Info("Running database migrations...")
-	if err := goose.Up(db, "migrations"); err != nil {
+	if err := goose.Up(migrationDb, "migrations"); err != nil {
 		logger.Error("Failed to run database migrations", "error", err)
 		os.Exit(1)
 	}
 	logger.Info("Database migrations completed successfully.")
+
+	// --- Database Connection Pool for Application ---
+	dbpool, err := pgxpool.New(context.Background(), config.DatabaseURL)
+	if err != nil {
+		logger.Error("Unable to connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer dbpool.Close()
 
 	app := fiber.New(fiber.Config{
 		Network:      "tcp",
