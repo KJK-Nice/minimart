@@ -113,17 +113,37 @@ func main() {
 	})
 
 	// --- Initialize Redis Client ---
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: config.RedisURL,
-	})
+	// Parse Redis URL to handle authentication
+	var redisOptions *redis.Options
+	if config.RedisURL != "" {
+		// Try to parse as URL first (for Railway or other cloud providers)
+		if opts, err := redis.ParseURL(config.RedisURL); err == nil {
+			redisOptions = opts
+			logger.Info("Using Redis URL configuration")
+		} else {
+			// Fall back to simple address format (for local development)
+			redisOptions = &redis.Options{
+				Addr: config.RedisURL,
+			}
+			logger.Info("Using Redis simple address configuration", "address", config.RedisURL)
+		}
+	} else {
+		// Default to localhost if not specified
+		redisOptions = &redis.Options{
+			Addr: "localhost:6379",
+		}
+		logger.Info("Using default Redis configuration")
+	}
+
+	redisClient := redis.NewClient(redisOptions)
 
 	// Test Redis connection
 	ctx := context.Background()
 	if err := redisClient.Ping(ctx).Err(); err != nil {
-		logger.Error("Failed to connect to Redis", "error", err, "address", config.RedisURL)
+		logger.Error("Failed to connect to Redis", "error", err)
 		os.Exit(1)
 	}
-	logger.Info("Successfully connected to Redis", "address", config.RedisURL)
+	logger.Info("Successfully connected to Redis")
 
 	// Event bus
 	eventBus := eventbus.NewRedisEventBus(redisClient)
