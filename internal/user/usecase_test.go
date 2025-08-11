@@ -13,7 +13,7 @@ func TestUserUseCase_RegisterUser(t *testing.T) {
 	t.Run("should register a user succsessfully", func(t *testing.T) {
 		// Arrange
 		ctx := context.Background()
-		userUsecase := NewUserUsecase(userRepo, eventBus)
+		userUsecase := NewUserUsecase(userRepo, eventBus, "test-secret")
 
 		// Act
 		userName := "John Wick"

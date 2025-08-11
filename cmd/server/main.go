@@ -22,6 +22,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+type AppConfig struct {
+	Port        string `mapstructure:"PORT"`
+	DatabaseURL string `mapstructure:"DATABASE_URL"`
+	RedisURL    string `mapstructure:"REDIS_URL"`
+	JwtSecret   string `mapstructure:"JWT_SECRET"`
+}
+
 func main() {
 	// --- Set up Structured Logger ---
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -32,28 +39,26 @@ func main() {
 		logger.Info("No .env file found, continue without it")
 	}
 
+	viper.AutomaticEnv()
+	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
 
-	// Read the config file
-	if err := viper.ReadInConfig(); err != nil {
-		logger.Info("No config file found, using environment variables")
+	err := viper.ReadInConfig()
+	if err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			logger.Info("Config file not found, relying on environment variables.")
+		} else {
+			logger.Error("Error reading config file", "error", err)
+		}
 	}
 
-	// --- Database Connection ---
-	connStr := os.Getenv("DATABASE_URL")
-	if connStr == "" {
-		dbUser := viper.GetString("database.user")
-		dbName := viper.GetString("database.dbname")
-		dbHost := viper.GetString("database.host")
-		dbPort := viper.GetString("database.port")
-		dbPassword := os.Getenv("DB_PASSWORD")
-		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
+	var config AppConfig
+	if err := viper.Unmarshal(&config); err != nil {
+		logger.Error("Unable to unmarshal configuration", "error", err)
 	}
 
-	dbpool, err := pgxpool.New(context.Background(), connStr)
+	dbpool, err := pgxpool.New(context.Background(), config.DatabaseURL)
 	if err != nil {
 		logger.Error("Unable to connect to database", "error", err)
 		os.Exit(1)
@@ -66,9 +71,8 @@ func main() {
 		AppName:      "Minimart App v0.0.1",
 	})
 
-	redisAdrr := viper.GetString("redis.address")
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: redisAdrr,
+		Addr: config.RedisURL,
 	})
 
 	// Event bus
@@ -104,7 +108,7 @@ func main() {
 
 	// User module
 	userRepo := user.NewPostgresUserRepository(dbpool)
-	userUsecase := user.NewUserUsecase(userRepo, eventBus)
+	userUsecase := user.NewUserUsecase(userRepo, eventBus, config.JwtSecret)
 	userHandler := user.NewUserHandler(userUsecase)
 	userHandler.RegisterRoutes(app)
 
@@ -146,8 +150,7 @@ func main() {
 		return c.SendString("Hello, World!")
 	})
 
-	serverPort := viper.GetInt("server.port")
-	addr := fmt.Sprintf(":%d", serverPort)
+	addr := fmt.Sprintf(":%s", config.Port)
 	logger.Info("Starting server", "address", addr)
 	if err := app.Listen(addr); err != nil {
 		logger.Error("Failed to start server", "error", err)

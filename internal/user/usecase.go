@@ -8,7 +8,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,14 +20,16 @@ type UserUsecase interface {
 }
 
 type userUsecase struct {
-	repo     UserRepository
-	eventBus eventbus.EventBus
+	repo      UserRepository
+	eventBus  eventbus.EventBus
+	jwtSecret string
 }
 
-func NewUserUsecase(repo UserRepository, eventBus eventbus.EventBus) UserUsecase {
+func NewUserUsecase(repo UserRepository, eventBus eventbus.EventBus, jwtSecret string) UserUsecase {
 	return &userUsecase{
-		repo:     repo,
-		eventBus: eventBus,
+		repo:      repo,
+		eventBus:  eventBus,
+		jwtSecret: jwtSecret,
 	}
 }
 
@@ -86,11 +87,8 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (string
 	// Create the token object
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Get the secret key from our configuration
-	jwtSecret := viper.GetString("jwt.secret")
-
 	// Sign the token with our secret key
-	tokenString, err := token.SignedString([]byte(jwtSecret))
+	tokenString, err := token.SignedString([]byte(u.jwtSecret))
 	if err != nil {
 		return "", err
 	}
