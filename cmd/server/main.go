@@ -112,9 +112,18 @@ func main() {
 		AppName:      "Minimart App v0.0.1",
 	})
 
+	// --- Initialize Redis Client ---
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: config.RedisURL,
 	})
+
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		logger.Error("Failed to connect to Redis", "error", err, "address", config.RedisURL)
+		os.Exit(1)
+	}
+	logger.Info("Successfully connected to Redis", "address", config.RedisURL)
 
 	// Event bus
 	eventBus := eventbus.NewRedisEventBus(redisClient)
