@@ -32,6 +32,9 @@ WORKDIR /app
 # Copy the comiled binary from the builder stage
 COPY --from=builder /app/server .
 
+# Copy migrations
+COPY migrations ./migrations
+
 # Expose the port the app runs on
 EXPOSE 3000
 

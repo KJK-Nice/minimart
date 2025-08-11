@@ -18,7 +18,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib" // Goose requires a database driver
 	"github.com/joho/godotenv"
+	"github.com/pressly/goose/v3"
 	"github.com/spf13/viper"
 )
 
@@ -79,6 +81,25 @@ func main() {
 		os.Exit(1)
 	}
 	defer dbpool.Close()
+
+	// --- Run Database Migrations ---
+	goose.SetBaseFS(os.DirFS("."))
+	goose.SetLogger(goose.NopLogger()) // Disables goose's default logger
+	if err := goose.SetDialect("postgres"); err != nil {
+		logger.Error("Failed to set goose dialect", "error", err)
+		os.Exit(1)
+	}
+
+	// Get a standard sql.DB connection from the pool
+	db := dbpool.Acquire(context.Background()).Conn().PgConn().Conn()
+	defer db.Close()
+
+	logger.Info("Running database migrations...")
+	if err := goose.Up(db, "migrations"); err != nil {
+		logger.Error("Failed to run database migrations", "error", err)
+		os.Exit(1)
+	}
+	logger.Info("Database migrations completed successfully.")
 
 	app := fiber.New(fiber.Config{
 		Network:      "tcp",
