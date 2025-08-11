@@ -26,8 +26,7 @@ WORKDIR /app
 # Copy the comiled binary from the builder stage
 COPY --from=builder /app/server .
 
-# Copy the configuration file
-COPY config.yaml .
+
 
 # Expose the port the app runs on
 EXPOSE 3000

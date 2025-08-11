@@ -10,13 +10,14 @@ import (
 	"minimart/internal/notifications"
 	"minimart/internal/order"
 	"minimart/internal/shared/eventbus"
-	"minimart/internal/shared/middleware"
+	middlerware "minimart/internal/shared/middleware"
 	"minimart/internal/user"
 	"os"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
@@ -38,11 +39,32 @@ func main() {
 
 	// Read the config file
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Error("Error reading config file", "error", err)
-		os.Exit(1)
+		logger.Info("No config file found, using environment variables")
 	}
 
-	app := fiber.New()
+	// --- Database Connection ---
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		dbUser := viper.GetString("database.user")
+		dbName := viper.GetString("database.dbname")
+		dbHost := viper.GetString("database.host")
+		dbPort := viper.GetString("database.port")
+		dbPassword := os.Getenv("DB_PASSWORD")
+		connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
+	}
+
+	dbpool, err := pgxpool.New(context.Background(), connStr)
+	if err != nil {
+		logger.Error("Unable to connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer dbpool.Close()
+
+	app := fiber.New(fiber.Config{
+		Network:      "tcp",
+		ServerHeader: "Fiber",
+		AppName:      "Minimart App v0.0.1",
+	})
 
 	redisAdrr := viper.GetString("redis.address")
 	redisClient := redis.NewClient(&redis.Options{
@@ -75,25 +97,25 @@ func main() {
 	}()
 
 	// Merchant module
-	merchantRepo := merchant.NewInMemoryMerchantRepository()
+	merchantRepo := merchant.NewPostgresMerchantRepository(dbpool)
 	merchantUsecase := merchant.NewMerchantUsecase(merchantRepo)
 	merchantHandler := merchant.NewMerchantHandler(merchantUsecase)
 	merchantHandler.RegisterRoutes(app)
 
 	// User module
-	userRepo := user.NewInMemoryUserRepository()
+	userRepo := user.NewPostgresUserRepository(dbpool)
 	userUsecase := user.NewUserUsecase(userRepo, eventBus)
 	userHandler := user.NewUserHandler(userUsecase)
 	userHandler.RegisterRoutes(app)
 
 	// Order module
-	orderRepo := order.NewInMemoryOrderRepository()
+	orderRepo := order.NewPostgresOrderRepository(dbpool)
 	orderUsecase := order.NewOrderUsecase(orderRepo)
 	orderHandler := order.NewOrderHandler(orderUsecase)
 	orderHandler.RegisterRoutes(app)
 
 	// Menu module
-	menuRepo := menu.NewInMemoryMenuRepository()
+	menuRepo := menu.NewPostgresMenuRepository(dbpool)
 	menuUsecase := menu.NewMenuUsecase(menuRepo)
 	menuHandler := menu.NewMenuHandler(menuUsecase)
 	menuHandler.RegisterRoutes(app)

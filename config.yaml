@@ -7,6 +7,8 @@ redis:
 database:
   user: "minimart"
   dbname: "minimart_dev"
+  host: "localhost"
+  port: "5432"
 
 jwt:
   secret: "default-secret"
