@@ -23,10 +23,10 @@ import (
 )
 
 type AppConfig struct {
-	Port        string `mapstructure:"PORT"`
-	DatabaseURL string `mapstructure:"DATABASE_URL"`
-	RedisURL    string `mapstructure:"REDIS_URL"`
-	JwtSecret   string `mapstructure:"JWT_SECRET"`
+	Port        string `mapstructure:"port"`
+	DatabaseURL string `mapstructure:"database_url"`
+	RedisURL    string `mapstructure:"redis_url"`
+	JwtSecret   string `mapstructure:"jwt_secret"`
 }
 
 func main() {
