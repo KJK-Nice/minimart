@@ -39,10 +39,10 @@ func main() {
 		logger.Info("No .env file found, continue without it")
 	}
 
-	viper.AutomaticEnv()
 	viper.AddConfigPath(".")
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
+	viper.SetConfigName(".env")
+	viper.SetConfigType("env")
+	viper.AutomaticEnv()
 
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -151,6 +151,11 @@ func main() {
 	})
 
 	addr := fmt.Sprintf(":%s", config.Port)
+	logger.Info("Configuration loaded", "port", config.Port, "database_url", config.DatabaseURL, "redis_url", config.RedisURL)
+	if addr == "" {
+		logger.Info("No port specified, using default port 3000")
+		addr = ":3000" // Default to port 3000 if not specified
+	}
 	logger.Info("Starting server", "address", addr)
 	if err := app.Listen(addr); err != nil {
 		logger.Error("Failed to start server", "error", err)
