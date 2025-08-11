@@ -23,10 +23,10 @@ import (
 )
 
 type AppConfig struct {
-	Port        string `mapstructure:"port"`
-	DatabaseURL string `mapstructure:"database_url"`
-	RedisURL    string `mapstructure:"redis_url"`
-	JwtSecret   string `mapstructure:"jwt_secret"`
+	Port        string `mapstructure:"PORT"`
+	DatabaseURL string `mapstructure:"DATABASE_URL"`
+	RedisURL    string `mapstructure:"REDIS_URL"`
+	JwtSecret   string `mapstructure:"JWT_SECRET"`
 }
 
 func main() {
@@ -41,6 +41,16 @@ func main() {
 
 	viper.AutomaticEnv()
 
+	// Explicitly bind environment variables to viper keys
+	viper.BindEnv("PORT")
+	viper.BindEnv("DATABASE_URL")
+	viper.BindEnv("REDIS_URL")
+	viper.BindEnv("JWT_SECRET")
+
+	viper.AddConfigPath(".")
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+
 	err := viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -54,6 +64,14 @@ func main() {
 	if err := viper.Unmarshal(&config); err != nil {
 		logger.Error("Unable to unmarshal configuration", "error", err)
 	}
+
+	// --- Log the loaded configuration for debugging ---
+	logger.Info("Configuration loaded",
+		"Port", config.Port,
+		"DatabaseURL", config.DatabaseURL,
+		"RedisURL", config.RedisURL,
+		"JwtSecret", "...", // Don't log the secret itself
+	)
 
 	dbpool, err := pgxpool.New(context.Background(), config.DatabaseURL)
 	if err != nil {
