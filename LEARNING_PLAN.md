@@ -118,10 +118,10 @@ You can track your progress by checking off the items as you complete them.
 *   [x] **Authentication & Authorization:**
     *   [x] Implement JWT-based authentication.
     *   [x] Create middleware to protect routes.
-*   [ ] **Containerization:**
-    *   [ ] Write a `Dockerfile` for your Go application.
-    *   [ ] Improve your `docker-compose.yml` to run your Go application and a PostgreSQL database together.
-*   [ ] **CI/CD:**
-    *   [ ] Set up a basic CI pipeline using GitHub Actions to build and test your application on every push.
+*   [x] **Containerization:**
+    *   [x] Write a `Dockerfile` for your Go application.
+    *   [x] Improve your `docker-compose.yml` to run your Go application and a PostgreSQL database together.
+*   [x] **CI/CD:**
+    *   [x] Set up a basic CI pipeline using GitHub Actions to build and test your application on every push.
 
 Good luck with your learning journey! This project is a great way to apply these concepts in a practical way.
