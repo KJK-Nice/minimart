@@ -1,14 +1,17 @@
-# Spec-Then-Code: Order Fulfillment Flow
+# Spec-Then-Code: Order Fulfillment Flow (Entity-First Approach)
 
 ## Overview
-This specification defines the implementation of a complete order fulfillment flow for the Minimart B2C ordering system. The feature enables merchants to receive, manage, and fulfill orders while providing real-time status updates to customers. This transforms the current one-way order placement into a complete, bidirectional order lifecycle management system.
+This specification defines the implementation of a complete order fulfillment flow for the Minimart B2C ordering system using a **rich domain model approach**. The feature enables merchants to receive, manage, and fulfill orders while providing real-time status updates to customers. 
+
+**Key Design Principle**: Business logic lives in the entity layer, making the domain model rich and testable without any infrastructure dependencies. Use cases become thin orchestration layers, and repositories are pure persistence interfaces.
 
 ### Output Location
-Implementation will be distributed across multiple modules:
-- `/internal/order/` - Enhanced order entity and use cases
-- `/internal/merchant/` - New merchant order management capabilities
-- `/internal/notifications/` - Order status change notifications
-- `/internal/shared/eventbus/` - Event-driven status updates
+Implementation will follow an inside-out approach:
+1. **Phase 1: Entity Layer** - `/internal/order/entity.go` and related domain models
+2. **Phase 2: Entity Tests** - Pure domain logic tests without any dependencies
+3. **Phase 3: Use Cases** - Thin orchestration layer
+4. **Phase 4: Infrastructure** - Repositories, handlers, events
+5. **Phase 5: Hypermedia UI** - Datastar-powered HTML templates with server-sent events
 
 ## Problem Statement
 Currently, when customers place orders through Minimart:
@@ -62,11 +65,12 @@ This feature is essential to achieve SLC (Simple, Lovable, Complete) status.
    - Status changes trigger events for notifications
 
 ### Design Goals
+- **Entity-First**: All business logic in the entity layer (rich domain models)
+- **Pure Domain Logic**: Entities have zero infrastructure dependencies
+- **Fast Testing**: Test complex business logic without mocks or databases
 - **Simple**: Focus on core fulfillment flow, defer complex features (payments, ratings)
 - **Complete**: End-to-end order lifecycle that actually works
 - **Lovable**: Real-time updates reduce customer anxiety
-- **Event-Driven**: Use existing event bus for loose coupling
-- **Testable**: Clear state transitions with business logic in use cases
 
 ## Analysis of the Issue
 
@@ -95,6 +99,7 @@ Examining the codebase:
 - `OrderStatus`: Limited enum with 4 states
 - No merchant order management endpoints
 - No order-merchant relationship
+- Currently using JSON REST API pattern
 
 ### List of Files
 **To Modify:**
@@ -102,14 +107,19 @@ Examining the codebase:
 - `/internal/order/usecase.go` - Add order management methods
 - `/internal/order/repository.go` - Add query methods
 - `/internal/order/postgres_repository.go` - Implement new queries
-- `/internal/order/handler.go` - Add status update endpoints
-- `/internal/merchant/handler.go` - Add order management endpoints
+- `/internal/order/handler.go` - Convert to hypermedia handlers
+- `/internal/merchant/handler.go` - Convert to hypermedia handlers
 - `/internal/merchant/usecase.go` - Add merchant order methods
 
 **To Create:**
-- `/internal/order/events.go` - Order status change events
+- `/internal/order/domain_events.go` - Order domain events
+- `/internal/order/value_objects.go` - Value objects (Money, Address, etc.)
+- `/internal/order/view_models.go` - View models for templates
+- `/internal/order/sse_handler.go` - Server-Sent Events for real-time updates
 - `/internal/merchant/order_management.go` - Merchant order use cases
-- `/internal/notifications/order_subscriber.go` - Handle order events
+- `/templates/order/*.html` - Datastar-enhanced HTML templates
+- `/templates/merchant/*.html` - Merchant dashboard templates
+- `/static/css/app.css` - Styling (can use Tailwind)
 - `/migrations/002_order_enhancements.sql` - Database schema updates
 
 ### Relevant Code Snippets
@@ -131,157 +141,412 @@ type Order struct {
 
 ## Proposed Solutions
 
-### Solution 1: Enhance Existing Order Module (Recommended)
-Extend the current order module with merchant context and management capabilities:
-- Add MerchantID and pricing to Order entity
-- Create bidirectional API (customer and merchant facing)
-- Use event bus for real-time updates
-- Implement status state machine in use case layer
+### Solution: Rich Domain Model with Entity-First Development
+Transform the current anemic domain model into a rich domain model where entities encapsulate all business logic:
 
-**Pros**: Leverages existing code, maintains module boundaries, uses established patterns
-**Cons**: Requires database migration, more complex than starting fresh
+**Phase 1: Rich Entity Layer**
+- Order entity with methods: `Accept()`, `Reject()`, `StartPreparing()`, `MarkReady()`, `Complete()`, `Cancel()`
+- Each method validates state transitions internally
+- Entity methods return domain events
+- All business rules enforced at entity level
+- Zero infrastructure dependencies
 
-### Solution 2: Create Separate Fulfillment Module
-Build a new module specifically for order fulfillment:
-- Keep Order module for placement only
-- New Fulfillment module for merchant operations
-- Sync via events
+**Phase 2: Pure Domain Testing**
+- Test all business logic with simple unit tests
+- No mocks, no databases, just pure Go
+- Fast feedback loop during development
 
-**Pros**: Clean separation of concerns
-**Cons**: More complexity, potential data consistency issues
+**Phase 3: Thin Use Cases**
+- Use cases only orchestrate: load entity, call method, save entity, publish events
+- No business logic in use cases
+- Use cases handle cross-aggregate operations
+
+**Phase 4: Infrastructure**
+- Repositories for persistence
+- Event publishers for integration
+
+**Phase 5: Hypermedia UI**
+- HTML templates with Datastar attributes
+- Server-Sent Events for real-time updates
+- Backend-driven interactivity without JSON APIs
+
+**Benefits**: 
+- Business logic is infrastructure-agnostic
+- Tests run in milliseconds
+- Domain experts can read entity code
+- Easy to reason about state transitions
 
 ## Analysis of Changes Needed
 
-### Entity Enhancements
-1. Order entity needs: MerchantID, TotalAmount, DeliveryMethod, DeliveryAddress, EstimatedTime, UpdatedAt
-2. OrderStatus needs states: PENDING, ACCEPTED, REJECTED, PREPARING, READY, OUT_FOR_DELIVERY, COMPLETED, CANCELLED
-3. New StatusHistory entity for audit trail
+### Phase 1: Rich Entity Layer (Priority)
+1. **Order Aggregate Root**
+   - Fields: ID, CustomerID, MerchantID, Items, Status, TotalAmount, DeliveryDetails, Timestamps
+   - Methods: `Place()`, `Accept()`, `Reject(reason)`, `StartPreparing()`, `MarkReady()`, `DispatchForDelivery()`, `Complete()`, `Cancel(reason)`
+   - Each method returns `(events []DomainEvent, error)`
+   - Internal state machine validates all transitions
+   - Calculates totals internally
 
-### Use Case Enhancements
-1. Customer: GetOrderStatus, GetOrderHistory, CancelOrder
-2. Merchant: GetPendingOrders, AcceptOrder, RejectOrder, UpdateOrderStatus
-3. System: CalculateOrderTotal, ValidateOrderItems, NotifyStatusChange
+2. **Value Objects**
+   - `Money`: Represents amounts with currency
+   - `Address`: Delivery address with validation
+   - `DeliveryMethod`: Enum with behavior
+   - `OrderStatus`: State with allowed transitions
+   - `TimeWindow`: Estimated time range
 
-### Repository Enhancements
-1. Queries: FindByMerchant, FindPendingByMerchant, FindByCustomer
-2. Updates: UpdateStatus, UpdateEstimatedTime
+3. **Domain Events** (returned by entity methods)
+   - `OrderPlaced`, `OrderAccepted`, `OrderRejected`, `OrderPreparing`, etc.
+   - Events are simple structs with data, no behavior
 
-### API Enhancements
-1. Customer endpoints: GET /orders/:id/status, GET /orders/history
-2. Merchant endpoints: GET /merchant/orders, PUT /merchant/orders/:id/status
-3. WebSocket endpoint for real-time updates (future enhancement)
+### Phase 2: Pure Domain Tests
+- Test each state transition method
+- Test invalid transitions
+- Test business rule enforcement
+- Test event generation
+- All tests run without any infrastructure
 
-## Implementation Plan
+### Phase 3: Thin Use Cases (Later)
+- Load aggregate from repository
+- Call domain method
+- Save aggregate
+- Publish domain events
 
-### Executable Steps for AI Agent
+### Phase 4: Infrastructure (Later)
+- Repository implementations
+- Event bus integration
 
-- [ ] Step 1: Update Order entity with merchant context and pricing
+### Phase 5: Hypermedia UI (Later)
+- HTML templates with Datastar reactivity
+- Server-Sent Events for real-time updates
+- Form submissions via Datastar actions
+- DOM patching for dynamic updates
+
+## Implementation Plan (Entity-First Approach)
+
+### Phase 1: Rich Domain Model Implementation
+
+#### Executable Steps for AI Agent
+
+- [x] Step 1: Create rich Order aggregate root with business logic ✅
   - File: `/internal/order/entity.go`
-  - Add MerchantID, TotalAmount, DeliveryMethod, DeliveryAddress fields
-  - Expand OrderStatus enum with fulfillment states
-  - Add StatusHistory type for audit trail
+  - Implemented Order struct with all necessary fields
+  - Added state transition methods (Accept, Reject, StartPreparing, etc.)
+  - Each method validates transitions and returns domain events
+  - Implemented internal state machine for validation
+  - Added method to calculate total from items
 
-- [ ] Step 2: Create database migration for order enhancements
-  - File: `/migrations/002_order_enhancements.sql`
-  - Add merchant_id, total_amount, delivery_method, delivery_address columns
-  - Create order_status_history table
-  - Add indexes for merchant queries
+- [x] Step 2: Create value objects for domain concepts ✅
+  - File: `/internal/order/value_objects.go`
+  - Implemented Money type with Bitcoin/Satoshis (NOT USD)
+  - Implemented Address type with validation
+  - Implemented DeliveryMethod enum with behavior
+  - Implemented TimeWindow for estimates
+  - Added Bitcoin conversion helpers (BTC, mBTC, sats)
 
-- [ ] Step 3: Define order event types
-  - File: `/internal/order/events.go`
-  - Create OrderPlacedEvent, OrderStatusChangedEvent, OrderCompletedEvent
-  - Include all necessary data for subscribers
+- [x] Step 3: Define domain events (pure data structures) ✅
+  - File: `/internal/order/domain_events.go`
+  - Created OrderPlaced, OrderAccepted, OrderRejected events
+  - Created OrderPreparing, OrderReady, OrderOutForDelivery events
+  - Created OrderCompleted, OrderCancelled events
+  - Events are simple structs with no behavior
 
-- [ ] Step 4: Enhance order repository interface and implementation
-  - Files: `/internal/order/repository.go`, `/internal/order/postgres_repository.go`
-  - Add FindByMerchantID, FindPendingByMerchantID methods
-  - Add UpdateStatus method with history tracking
-  - Implement efficient merchant order queries
+- [x] Step 4: Write comprehensive entity tests ✅
+  - File: `/internal/order/entity_test.go`
+  - Tested all valid state transitions
+  - Tested all invalid state transitions return errors
+  - Tested business rule enforcement
+  - Tested event generation for each transition
+  - Tested total calculation in Satoshis
+  - No infrastructure dependencies - pure unit tests
+  - Added Bitcoin Money tests in `value_objects_test.go`
 
-- [ ] Step 5: Extend order use case with management methods
+- [x] Step 5: Create Order factory with validation ✅
+  - File: `/internal/order/entity.go`
+  - NewOrder function with comprehensive validation
+  - Validates customer, merchant, items, delivery method
+  - Validates delivery address for delivery orders
+  - Calculates initial total in Satoshis
+
+### Phase 2: Integration with Menu Module (Entity Layer)
+
+- [ ] Step 6: Enhance MenuItem entity with availability
+  - File: `/internal/menu/entity.go`
+  - Add methods: IsAvailable(), GetPrice()
+  - Add stock management methods
+
+- [ ] Step 7: Create OrderItem value object
+  - File: `/internal/order/order_item.go`
+  - Encapsulate MenuItem reference, quantity, price snapshot
+  - Method to calculate subtotal
+  - Validation for quantity limits
+
+### Phase 3: Merchant Order Management (Entity Layer)
+
+- [ ] Step 8: Create Merchant aggregate methods
+  - File: `/internal/merchant/entity.go`
+  - Add methods for order management capabilities
+  - Track merchant availability/operating hours
+  - Business rules for order acceptance
+
+### Phase 4: Thin Use Cases (Orchestration Only)
+
+- [ ] Step 9: Create thin order use cases
   - File: `/internal/order/usecase.go`
-  - Add GetOrderByID, UpdateOrderStatus, GetMerchantOrders methods
-  - Implement status validation state machine
-  - Publish events on status changes
-  - Calculate order totals from menu items
+  - PlaceOrder: Create order, save, publish events
+  - AcceptOrder: Load, call Accept(), save, publish
+  - No business logic - only orchestration
 
-- [ ] Step 6: Create merchant order management use case
-  - File: `/internal/merchant/order_management.go`
-  - Implement AcceptOrder, RejectOrder, UpdateOrderProgress methods
-  - Add business logic for time estimates
-  - Validate merchant ownership of orders
+- [ ] Step 10: Create merchant order use cases
+  - File: `/internal/merchant/order_usecase.go`
+  - GetPendingOrders: Simple repository call
+  - ManageOrder: Load order, call method, save
 
-- [ ] Step 7: Add customer order tracking endpoints
-  - File: `/internal/order/handler.go`
-  - GET /orders/:id endpoint for order details and status
-  - GET /orders endpoint for order history
-  - Add proper error handling and auth checks
+### Phase 5: Infrastructure Layer (Hypermedia-Driven)
 
-- [ ] Step 8: Add merchant order management endpoints
-  - File: `/internal/merchant/handler.go`
-  - GET /merchant/orders endpoint for pending orders
-  - PUT /merchant/orders/:id/accept endpoint
-  - PUT /merchant/orders/:id/reject endpoint
-  - PUT /merchant/orders/:id/status endpoint
-  - Ensure merchant auth middleware is applied
+- [ ] Step 11: Update repository interfaces
+  - File: `/internal/order/repository.go`
+  - Pure persistence interface
+  - No business logic in repository
 
-- [ ] Step 9: Create order notification subscriber
-  - File: `/internal/notifications/order_subscriber.go`
-  - Subscribe to order events
-  - Log notifications (email/SMS integration deferred)
-  - Handle different event types appropriately
+- [ ] Step 12: Implement PostgreSQL repository
+  - File: `/internal/order/postgres_repository.go`
+  - Simple CRUD operations
+  - Efficient queries for merchant views
 
-- [ ] Step 10: Update main server to wire new components
+- [ ] Step 13: Create database migrations
+  - File: `/migrations/002_order_enhancements.sql`
+  - Support new entity structure
+  - Add necessary indexes
+
+### Phase 6: Hypermedia UI with Datastar
+
+- [ ] Step 14: Create HTML templates with Datastar attributes
+  - File: `/templates/order/list.html` - Order list with reactive updates
+  - File: `/templates/order/detail.html` - Order detail view
+  - File: `/templates/merchant/dashboard.html` - Merchant order management
+  - Use `data-*` attributes for reactivity
+  - Use Server-Sent Events (SSE) for real-time updates
+
+- [ ] Step 15: Create Datastar-aware HTTP handlers
+  - Files: `/internal/order/handler.go`, `/internal/merchant/handler.go`
+  - Return HTML fragments instead of JSON
+  - Use Datastar's patching mechanism for updates
+  - Implement SSE endpoints for real-time order status
+
+- [ ] Step 16: Implement Server-Sent Events for real-time updates
+  - File: `/internal/order/sse_handler.go`
+  - Stream order status changes to customers
+  - Stream new orders to merchants
+  - Use Datastar's SSE integration
+
+- [ ] Step 17: Create view models for templates
+  - File: `/internal/order/view_models.go`
+  - Transform domain entities to view-friendly structures
+  - Add presentation logic (formatting, display states)
+
+- [ ] Step 18: Setup static assets and Datastar
   - File: `/cmd/server/main.go`
-  - Register new endpoints
-  - Initialize order event publishers
-  - Start notification subscribers
-
-- [ ] Step 11: Write integration tests for order fulfillment flow
-  - File: `/internal/order/fulfillment_test.go`
-  - Test complete flow: place → accept → prepare → complete
-  - Test rejection flow
-  - Test concurrent status updates
-  - Verify event publishing
-
-- [ ] Step 12: Update API documentation
-  - File: `/docs/api/order-fulfillment.md`
-  - Document new endpoints
-  - Provide example requests/responses
-  - Document status workflow
+  - Serve Datastar JS from CDN or local
+  - Configure template engine (html/template)
+  - Setup static file serving
 
 ### Required Code Changes
 
-1. **Order Entity Enhancement**:
+1. **Rich Order Aggregate Root**:
 ```go
 type Order struct {
-    ID              uuid.UUID
-    CustomerID      uuid.UUID
-    MerchantID      uuid.UUID       // NEW
-    Items           []OrderItem
-    Status          OrderStatus
-    TotalAmount     int64           // NEW: in cents
-    DeliveryMethod  DeliveryMethod  // NEW
-    DeliveryAddress *Address        // NEW: optional
-    EstimatedTime   *time.Time      // NEW: optional
-    CreatedAt       time.Time
-    UpdatedAt       time.Time       // NEW
-    StatusHistory   []StatusChange  // NEW
+    id              uuid.UUID
+    customerID      uuid.UUID
+    merchantID      uuid.UUID
+    items           []OrderItem
+    status          OrderStatus
+    totalAmount     Money
+    deliveryMethod  DeliveryMethod
+    deliveryAddress *Address
+    estimatedWindow *TimeWindow
+    createdAt       time.Time
+    updatedAt       time.Time
+    statusHistory   []StatusChange
+    
+    // Domain events to be published
+    events []DomainEvent
+}
+
+// Business logic methods (return events and errors)
+func (o *Order) Accept(estimatedMinutes int) ([]DomainEvent, error) {
+    if !o.canTransitionTo(OrderStatusAccepted) {
+        return nil, ErrInvalidStateTransition
+    }
+    o.status = OrderStatusAccepted
+    o.estimatedWindow = NewTimeWindow(time.Now(), estimatedMinutes)
+    o.recordStatusChange(OrderStatusAccepted, "Order accepted by merchant")
+    
+    event := OrderAcceptedEvent{
+        OrderID:    o.id,
+        MerchantID: o.merchantID,
+        CustomerID: o.customerID,
+        EstimatedTime: o.estimatedWindow.EndTime,
+    }
+    o.events = append(o.events, event)
+    return []DomainEvent{event}, nil
+}
+
+func (o *Order) Reject(reason string) ([]DomainEvent, error) {
+    if !o.canTransitionTo(OrderStatusRejected) {
+        return nil, ErrInvalidStateTransition
+    }
+    o.status = OrderStatusRejected
+    o.recordStatusChange(OrderStatusRejected, reason)
+    
+    event := OrderRejectedEvent{
+        OrderID: o.id,
+        Reason:  reason,
+    }
+    o.events = append(o.events, event)
+    return []DomainEvent{event}, nil
+}
+
+// More methods: StartPreparing(), MarkReady(), Complete(), Cancel()
+```
+
+2. **Value Objects with Behavior**:
+```go
+type Money struct {
+    amount   int64  // in cents
+    currency string
+}
+
+func NewMoney(amount int64) Money {
+    return Money{amount: amount, currency: "USD"}
+}
+
+func (m Money) Add(other Money) Money {
+    return Money{amount: m.amount + other.amount, currency: m.currency}
+}
+
+func (m Money) String() string {
+    return fmt.Sprintf("$%.2f", float64(m.amount)/100)
 }
 ```
 
-2. **Extended Status Enum**:
+3. **State Machine in Entity**:
 ```go
-const (
-    PENDING OrderStatus = iota
-    ACCEPTED
-    REJECTED
-    PREPARING
-    READY_FOR_PICKUP
-    OUT_FOR_DELIVERY
-    COMPLETED
-    CANCELLED
-)
+var validTransitions = map[OrderStatus][]OrderStatus{
+    OrderStatusPending:   {OrderStatusAccepted, OrderStatusRejected, OrderStatusCancelled},
+    OrderStatusAccepted:  {OrderStatusPreparing, OrderStatusCancelled},
+    OrderStatusPreparing: {OrderStatusReady, OrderStatusCancelled},
+    OrderStatusReady:     {OrderStatusOutForDelivery, OrderStatusCompleted},
+    // ... more transitions
+}
+
+func (o *Order) canTransitionTo(newStatus OrderStatus) bool {
+    validStates, exists := validTransitions[o.status]
+    if !exists {
+        return false
+    }
+    for _, valid := range validStates {
+        if valid == newStatus {
+            return true
+        }
+    }
+    return false
+}
+```
+
+4. **Datastar-Enhanced HTML Templates**:
+```html
+<!-- templates/merchant/dashboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@main/bundles/datastar.js"></script>
+</head>
+<body>
+    <!-- Real-time order list with SSE -->
+    <div data-sse-source="/merchant/orders/stream">
+        <h2>Pending Orders</h2>
+        <div id="orders-list" data-sse-swap="orders">
+            <!-- Orders will be streamed here -->
+        </div>
+    </div>
+
+    <!-- Order card template -->
+    <template id="order-template">
+        <div class="order-card" data-order-id="{{.ID}}">
+            <h3>Order #{{.ID}}</h3>
+            <p>Customer: {{.CustomerName}}</p>
+            <p>Total: {{.TotalAmount}}</p>
+            <div class="order-items">
+                {{range .Items}}
+                <div>{{.Name}} x {{.Quantity}}</div>
+                {{end}}
+            </div>
+            
+            <!-- Datastar actions for order management -->
+            <div class="actions">
+                <button 
+                    data-on-click="$$post('/merchant/orders/{{.ID}}/accept')"
+                    data-swap-oob="true">
+                    Accept Order
+                </button>
+                <button 
+                    data-on-click="$$post('/merchant/orders/{{.ID}}/reject')"
+                    data-model="rejectReason"
+                    data-swap-oob="true">
+                    Reject Order
+                </button>
+            </div>
+        </div>
+    </template>
+</body>
+</html>
+```
+
+5. **Hypermedia Handler Example**:
+```go
+// internal/merchant/handler.go
+func (h *MerchantHandler) AcceptOrder(c *fiber.Ctx) error {
+    orderID := c.Params("id")
+    merchantID := getMerchantIDFromContext(c)
+    
+    // Call use case
+    events, err := h.usecase.AcceptOrder(c.Context(), merchantID, orderID, 30)
+    if err != nil {
+        return c.Status(400).SendString(fmt.Sprintf("<div class='error'>%s</div>", err.Error()))
+    }
+    
+    // Return HTML fragment for Datastar to swap
+    return c.Type("html").SendString(`
+        <div class="order-card" data-order-id="` + orderID + `" data-swap-oob="true">
+            <div class="success">Order accepted! Preparing in 30 minutes.</div>
+            <button data-on-click="$$post('/merchant/orders/` + orderID + `/preparing')">
+                Start Preparing
+            </button>
+        </div>
+    `)
+}
+
+// SSE endpoint for real-time updates
+func (h *MerchantHandler) StreamOrders(c *fiber.Ctx) error {
+    c.Set("Content-Type", "text/event-stream")
+    c.Set("Cache-Control", "no-cache")
+    c.Set("Connection", "keep-alive")
+    
+    merchantID := getMerchantIDFromContext(c)
+    
+    // Subscribe to order events
+    events := h.eventBus.Subscribe("order.created", "order.updated")
+    
+    for event := range events {
+        if event.MerchantID == merchantID {
+            // Send HTML fragment via SSE
+            html := h.renderOrderCard(event.Order)
+            c.Write([]byte(fmt.Sprintf("data: %s\n\n", html)))
+            c.Context().Flush()
+        }
+    }
+    
+    return nil
+}
 ```
 
 ## Test-Driven Development
