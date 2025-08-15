@@ -1,7 +1,7 @@
 # Spec-Then-Code: Order Fulfillment Flow (Entity-First Approach)
 
 ## Overview
-This specification defines the implementation of a complete order fulfillment flow for the Minimart B2C ordering system using a **rich domain model approach**. The feature enables merchants to receive, manage, and fulfill orders while providing real-time status updates to customers. 
+This specification defines the implementation of a complete order fulfillment flow for the Minimart B2C ordering system using a **rich domain model approach**. The feature enables merchants to receive, manage, and fulfill orders while providing real-time status updates to customers.
 
 **Key Design Principle**: Business logic lives in the entity layer, making the domain model rich and testable without any infrastructure dependencies. Use cases become thin orchestration layers, and repositories are pure persistence interfaces.
 
@@ -170,7 +170,7 @@ Transform the current anemic domain model into a rich domain model where entitie
 - Server-Sent Events for real-time updates
 - Backend-driven interactivity without JSON APIs
 
-**Benefits**: 
+**Benefits**:
 - Business logic is infrastructure-agnostic
 - Tests run in milliseconds
 - Domain experts can read entity code
@@ -268,12 +268,12 @@ Transform the current anemic domain model into a rich domain model where entitie
 
 ### Phase 2: Integration with Menu Module (Entity Layer)
 
-- [ ] Step 6: Enhance MenuItem entity with availability
+- [x] Step 6: Enhance MenuItem entity with availability ✅
   - File: `/internal/menu/entity.go`
   - Add methods: IsAvailable(), GetPrice()
   - Add stock management methods
 
-- [ ] Step 7: Create OrderItem value object
+- [x] Step 7: Create OrderItem value object ✅
   - File: `/internal/order/order_item.go`
   - Encapsulate MenuItem reference, quantity, price snapshot
   - Method to calculate subtotal
@@ -366,7 +366,7 @@ type Order struct {
     createdAt       time.Time
     updatedAt       time.Time
     statusHistory   []StatusChange
-    
+
     // Domain events to be published
     events []DomainEvent
 }
@@ -379,7 +379,7 @@ func (o *Order) Accept(estimatedMinutes int) ([]DomainEvent, error) {
     o.status = OrderStatusAccepted
     o.estimatedWindow = NewTimeWindow(time.Now(), estimatedMinutes)
     o.recordStatusChange(OrderStatusAccepted, "Order accepted by merchant")
-    
+
     event := OrderAcceptedEvent{
         OrderID:    o.id,
         MerchantID: o.merchantID,
@@ -396,7 +396,7 @@ func (o *Order) Reject(reason string) ([]DomainEvent, error) {
     }
     o.status = OrderStatusRejected
     o.recordStatusChange(OrderStatusRejected, reason)
-    
+
     event := OrderRejectedEvent{
         OrderID: o.id,
         Reason:  reason,
@@ -480,15 +480,15 @@ func (o *Order) canTransitionTo(newStatus OrderStatus) bool {
                 <div>{{.Name}} x {{.Quantity}}</div>
                 {{end}}
             </div>
-            
+
             <!-- Datastar actions for order management -->
             <div class="actions">
-                <button 
+                <button
                     data-on-click="$$post('/merchant/orders/{{.ID}}/accept')"
                     data-swap-oob="true">
                     Accept Order
                 </button>
-                <button 
+                <button
                     data-on-click="$$post('/merchant/orders/{{.ID}}/reject')"
                     data-model="rejectReason"
                     data-swap-oob="true">
@@ -507,13 +507,13 @@ func (o *Order) canTransitionTo(newStatus OrderStatus) bool {
 func (h *MerchantHandler) AcceptOrder(c *fiber.Ctx) error {
     orderID := c.Params("id")
     merchantID := getMerchantIDFromContext(c)
-    
+
     // Call use case
     events, err := h.usecase.AcceptOrder(c.Context(), merchantID, orderID, 30)
     if err != nil {
         return c.Status(400).SendString(fmt.Sprintf("<div class='error'>%s</div>", err.Error()))
     }
-    
+
     // Return HTML fragment for Datastar to swap
     return c.Type("html").SendString(`
         <div class="order-card" data-order-id="` + orderID + `" data-swap-oob="true">
@@ -530,12 +530,12 @@ func (h *MerchantHandler) StreamOrders(c *fiber.Ctx) error {
     c.Set("Content-Type", "text/event-stream")
     c.Set("Cache-Control", "no-cache")
     c.Set("Connection", "keep-alive")
-    
+
     merchantID := getMerchantIDFromContext(c)
-    
+
     // Subscribe to order events
     events := h.eventBus.Subscribe("order.created", "order.updated")
-    
+
     for event := range events {
         if event.MerchantID == merchantID {
             // Send HTML fragment via SSE
@@ -544,7 +544,7 @@ func (h *MerchantHandler) StreamOrders(c *fiber.Ctx) error {
             c.Context().Flush()
         }
     }
-    
+
     return nil
 }
 ```
