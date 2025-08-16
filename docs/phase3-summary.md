@@ -212,18 +212,35 @@ Advanced database implementations with rich entity reconstruction:
 - **UUID Primary Keys**: Distributed system ready
 - **Indexed Relationships**: Fast joins across aggregates
 
-## Next Steps (Phase 4+)
+## Next Steps (Phase 4: Hypermedia UI)
 
-### Immediate Infrastructure Updates
-1. **Entity Reconstruction Methods**: Add `ReconstructOrder`, `ReconstructMenuItem`, `ReconstructMerchant`
-2. **Handler Updates**: Restore HTTP handlers to work with rich entities
-3. **Event Publishing**: Integrate event bus for real-time notifications
+### 🎯 **Architectural Decision: Skip Traditional JSON APIs**
 
-### Advanced Features
-1. **Menu Use Cases**: Create menu management operations
-2. **Advanced Analytics**: Enhanced merchant reporting
+**Decision Made**: Skip traditional JSON handler integration and go directly to hypermedia UI.
+
+**Rationale**:
+- **Avoid Duplicate Work**: Existing handlers work with old anemic models and need complete rewrites anyway
+- **Hypermedia is the End Goal**: System designed for Datastar reactive UI with real-time updates
+- **Simpler Architecture**: HTML templates become the API contract, no separate frontend layer needed
+- **Better UX**: Server-sent events and reactive DOM updates provide superior user experience
+- **Modern Approach**: Follows hypermedia-driven application principles
+
+### Immediate Hypermedia Implementation
+1. **HTML Templates with Datastar**: Create reactive templates with `data-*` attributes
+2. **View Models**: Transform domain entities for presentation
+3. **Hypermedia Handlers**: Return HTML fragments instead of JSON
+4. **Server-Sent Events**: Real-time updates via SSE
+5. **Event Integration**: Connect domain events to DOM updates
+
+### Entity Method Completion (As Needed)
+1. **Entity Reconstruction Methods**: Add `ReconstructOrder`, `ReconstructMenuItem`, `ReconstructMerchant` when needed for PostgreSQL repos
+2. **Missing Entity Methods**: Add any methods referenced by use cases (e.g., `AmountSatoshis()`, `MarkOutForDelivery()`)
+
+### Advanced Features (Later)
+1. **Menu Management UI**: Merchant menu editing interface
+2. **Advanced Analytics Dashboard**: Enhanced merchant reporting with charts
 3. **Order Modifications**: Add/remove items from existing orders
-4. **Hypermedia UI**: Datastar-driven frontend (Phase 5)
+4. **Mobile-Responsive Design**: Optimize for mobile merchant management
 
 ### Integration Enhancements
 1. **Stock Release**: Automatic stock release on order cancellation

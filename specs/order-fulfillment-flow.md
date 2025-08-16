@@ -6,12 +6,23 @@ This specification defines the implementation of a complete order fulfillment fl
 **Key Design Principle**: Business logic lives in the entity layer, making the domain model rich and testable without any infrastructure dependencies. Use cases become thin orchestration layers, and repositories are pure persistence interfaces.
 
 ### Output Location
-Implementation will follow an inside-out approach:
+Implementation follows an entity-first, hypermedia-driven approach:
 1. **Phase 1: Entity Layer** - `/internal/order/entity.go` and related domain models ✅ **COMPLETE**
 2. **Phase 2: Entity Tests** - Pure domain logic tests without any dependencies ✅ **COMPLETE**
 3. **Phase 3: Use Cases & Infrastructure** - Thin orchestration layer, repositories, database migrations ✅ **COMPLETE**
-4. **Phase 4: Handler Integration** - Update handlers to work with rich entities 🚧 **NEXT**
-5. **Phase 5: Hypermedia UI** - Datastar-powered HTML templates with server-sent events 📋 **PLANNED**
+4. **Phase 4: Hypermedia UI** - Datastar-powered HTML templates with server-sent events 🚧 **NEXT**
+
+### 🎯 **Architecture Decision: Skip Traditional JSON APIs**
+**Decision Made**: Skip traditional JSON handler integration and go directly to hypermedia UI.
+
+**Rationale**:
+- **Avoid Duplicate Work**: Existing handlers work with old anemic models and need complete rewrites anyway
+- **Hypermedia is the End Goal**: System designed for Datastar reactive UI with real-time updates
+- **Simpler Architecture**: HTML templates become the API contract, no separate frontend layer needed
+- **Better UX**: Server-sent events and reactive DOM updates provide superior user experience
+- **Modern Approach**: Follows hypermedia-driven application principles
+
+**What We Keep**: User authentication handlers (already functional) and simple utility endpoints.
 
 ## 🎉 Phase 3 Complete - January 2025
 
