@@ -1,0 +1,206 @@
+/* Minimart Custom Styles */
+
+/* Bitcoin-specific styling */
+.bitcoin-amount {
+    font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 500;
+}
+
+/* Status badges */
+.status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-pending {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-accepted {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.status-preparing {
+    @apply bg-orange-100 text-orange-800;
+}
+
+.status-ready {
+    @apply bg-green-100 text-green-800;
+}
+
+.status-out-for-delivery {
+    @apply bg-purple-100 text-purple-800;
+}
+
+.status-completed {
+    @apply bg-gray-100 text-gray-800;
+}
+
+.status-cancelled, .status-rejected {
+    @apply bg-red-100 text-red-800;
+}
+
+/* Card styles */
+.card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200;
+}
+
+.card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+}
+
+.card-body {
+    @apply p-6;
+}
+
+/* Form styles */
+.form-group {
+    @apply mb-4;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.form-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500;
+}
+
+.form-textarea {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500;
+}
+
+.form-select {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500;
+}
+
+.form-error {
+    @apply mt-1 text-sm text-red-600;
+}
+
+.form-help {
+    @apply mt-1 text-sm text-gray-500;
+}
+
+/* Button styles */
+.btn {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
+}
+
+.btn-primary {
+    @apply bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500;
+}
+
+.btn-secondary {
+    @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+}
+
+.btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.btn-outline-primary {
+    @apply border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white focus:ring-orange-500;
+}
+
+.btn-sm {
+    @apply px-3 py-1.5 text-xs;
+}
+
+.btn-lg {
+    @apply px-6 py-3 text-base;
+}
+
+/* Loading states */
+.loading {
+    @apply opacity-50 pointer-events-none;
+}
+
+.spinner {
+    @apply inline-block w-4 h-4 border-2 border-gray-300 border-t-orange-600 rounded-full animate-spin;
+}
+
+/* Utility classes */
+.text-bitcoin {
+    @apply text-orange-600;
+}
+
+.bg-bitcoin {
+    @apply bg-orange-600;
+}
+
+.border-bitcoin {
+    @apply border-orange-600;
+}
+
+/* Responsive helpers */
+.hide-on-mobile {
+    @apply hidden sm:block;
+}
+
+.show-on-mobile {
+    @apply block sm:hidden;
+}
+
+/* Animation improvements */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Order status timeline */
+.status-timeline {
+    @apply relative;
+}
+
+.status-timeline::before {
+    content: '';
+    @apply absolute left-4 top-8 bottom-0 w-0.5 bg-gray-200;
+}
+
+.status-step {
+    @apply relative flex items-start pb-8;
+}
+
+.status-step:last-child {
+    @apply pb-0;
+}
+
+.status-step-indicator {
+    @apply relative z-10 flex h-8 w-8 items-center justify-center rounded-full;
+}
+
+.status-step-indicator.completed {
+    @apply bg-green-600 text-white;
+}
+
+.status-step-indicator.active {
+    @apply bg-orange-600 text-white;
+}
+
+.status-step-indicator.pending {
+    @apply bg-gray-200 text-gray-500;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}

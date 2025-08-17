@@ -4,6 +4,7 @@
 # Go binaries
 *.exe
 *.exe~
+bin
 
 # Go build cache
 /vendor/

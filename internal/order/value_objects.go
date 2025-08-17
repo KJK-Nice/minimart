@@ -266,6 +266,11 @@ func (tw *TimeWindow) MinutesRemaining(now time.Time) int {
 	return int(tw.EndTime.Sub(now).Minutes())
 }
 
+// DurationMinutes returns the total duration of the time window in minutes
+func (tw *TimeWindow) DurationMinutes() int {
+	return int(tw.EndTime.Sub(tw.StartTime).Minutes())
+}
+
 // String returns a human-readable time window
 func (tw *TimeWindow) String() string {
 	format := "3:04 PM"

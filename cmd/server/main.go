@@ -6,17 +6,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"minimart/internal/menu"
-	"minimart/internal/merchant"
 	"minimart/internal/notifications"
-	"minimart/internal/order"
 	"minimart/internal/shared/eventbus"
 	middlerware "minimart/internal/shared/middleware"
 	"minimart/internal/user"
+	"minimart/pages"
+	"minimart/types"
 	"os"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/template/html/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib" // Goose requires a database driver
@@ -106,11 +109,58 @@ func main() {
 	}
 	defer dbpool.Close()
 
+	// --- Setup HTML Template Engine ---
+	engine := html.New("./templates", ".html")
+
+	// Add custom template functions
+	engine.AddFunc("substr", func(s string, start, length int) string {
+		if start < 0 || start >= len(s) {
+			return ""
+		}
+		end := start + length
+		if end > len(s) {
+			end = len(s)
+		}
+		return s[start:end]
+	})
+
+	engine.AddFunc("formatMoney", func(satoshis int64) string {
+		if satoshis >= 10000000 { // >= 0.1 BTC
+			btc := float64(satoshis) / 100000000
+			return fmt.Sprintf("%.8f BTC", btc)
+		} else if satoshis >= 100000 { // >= 1 mBTC
+			mbtc := float64(satoshis) / 100000
+			return fmt.Sprintf("%.3f mBTC", mbtc)
+		} else {
+			return fmt.Sprintf("%d sats", satoshis)
+		}
+	})
+
+	// Enable template reloading in development
+	if os.Getenv("DEBUG") == "templates" {
+		engine.Reload(true)
+		logger.Info("Template debugging enabled - templates will reload on changes")
+	}
+
 	app := fiber.New(fiber.Config{
 		Network:      "tcp",
 		ServerHeader: "Fiber",
 		AppName:      "Minimart App v0.0.1",
+		Views:        engine,
+		ViewsLayout:  "layouts/base",
 	})
+
+	// --- Setup Middleware ---
+	app.Use(recover.New())
+	app.Use(fiberlogger.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
+	}))
+
+	// --- Static File Serving ---
+	app.Static("/static", "./static")
 
 	// --- Initialize Redis Client ---
 	// Parse Redis URL to handle authentication
@@ -170,29 +220,30 @@ func main() {
 		}
 	}()
 
+	// TODO: Temporarily commented out until hypermedia handlers are created
 	// Merchant module
-	merchantRepo := merchant.NewPostgresMerchantRepository(dbpool)
-	merchantUsecase := merchant.NewMerchantUsecase(merchantRepo)
-	merchantHandler := merchant.NewMerchantHandler(merchantUsecase)
-	merchantHandler.RegisterRoutes(app)
+	// merchantRepo := merchant.NewPostgresMerchantRepository(dbpool)
+	// merchantUsecase := merchant.NewMerchantUsecase(merchantRepo)
+	// merchantHandler := merchant.NewMerchantHandler(merchantUsecase)
+	// merchantHandler.RegisterRoutes(app)
 
-	// User module
+	// User module (keep existing JSON handler)
 	userRepo := user.NewPostgresUserRepository(dbpool)
 	userUsecase := user.NewUserUsecase(userRepo, eventBus, config.JwtSecret)
 	userHandler := user.NewUserHandler(userUsecase)
 	userHandler.RegisterRoutes(app)
 
 	// Order module
-	orderRepo := order.NewPostgresOrderRepository(dbpool)
-	orderUsecase := order.NewOrderUsecase(orderRepo)
-	orderHandler := order.NewOrderHandler(orderUsecase)
-	orderHandler.RegisterRoutes(app)
+	// orderRepo := order.NewPostgresOrderRepository(dbpool)
+	// orderUsecase := order.NewOrderUsecase(orderRepo)
+	// orderHandler := order.NewOrderHandler(orderUsecase)
+	// orderHandler.RegisterRoutes(app)
 
 	// Menu module
-	menuRepo := menu.NewPostgresMenuRepository(dbpool)
-	menuUsecase := menu.NewMenuUsecase(menuRepo)
-	menuHandler := menu.NewMenuHandler(menuUsecase)
-	menuHandler.RegisterRoutes(app)
+	// menuRepo := menu.NewPostgresMenuRepository(dbpool)
+	// menuUsecase := menu.NewMenuUsecase(menuRepo)
+	// menuHandler := menu.NewMenuHandler(menuUsecase)
+	// menuHandler.RegisterRoutes(app)
 
 	api := app.Group("/api", middlerware.AuthRequire())
 
@@ -216,8 +267,19 @@ func main() {
 		})
 	})
 
+	// --- Hypermedia Routes ---
+	// Home page
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
+		// Mock user data for testing - later we'll get this from session/auth
+		var user *types.User
+		// Uncomment to test with a logged-in user:
+		// user = &types.User{
+		//	ID:       "user123",
+		//	Username: "satoshi",
+		//	Role:     "customer",
+		// }
+
+		return pages.Home(user).Render(c.Context(), c.Response().BodyWriter())
 	})
 
 	addr := fmt.Sprintf(":%s", config.Port)

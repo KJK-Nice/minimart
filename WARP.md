@@ -2,6 +2,18 @@
 
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
+## Current Development Status
+
+**Current Phase**: Phase 4 - Hypermedia UI Implementation (In Progress)
+
+**Recent Architectural Decision**: Skip traditional JSON APIs for hypermedia-first architecture (see `docs/adr-001-hypermedia-first-architecture.md`)
+
+**Key Focus Areas**:
+- HTML templates with Datastar reactivity
+- Server-sent events for real-time updates
+- Mobile-first merchant workflows
+- Progressive enhancement strategy
+
 ## Development Setup & Common Commands
 
 ### Local Development Environment
@@ -26,7 +38,24 @@ docker-compose up --build
 
 # Run in background
 docker-compose up -d
+
+# Watch templates for changes (using air)
+air -c .air.toml
+
+# Compile Tailwind CSS (if using)
+npm run build:css
+
+# Run with template debugging enabled
+DEBUG=templates go run ./cmd/server/main.go
+
+# Start dev environment with hot reload
+make dev
 ```
+
+**Template Development:**
+- Templates automatically reload in development mode
+- Use `DEBUG=templates` flag for template debugging
+- Hot reload supported for Go code and static assets
 
 ### Testing Commands
 
@@ -177,6 +206,24 @@ PENDING → ACCEPTED → PREPARING → READY → COMPLETED
       REJECTED  CANCELLED  CANCELLED CANCELLED
 ```
 
+### View Models & Presentation Logic
+- Transform domain entities for HTML display
+- Handle Bitcoin amount formatting (sats/mBTC/BTC)
+- Status-specific UI components
+- Separation of domain and presentation concerns
+- Template-specific data structures
+
+Example:
+```go
+type OrderViewModel struct {
+    ID            string
+    Status        string
+    TotalDisplay  string // Formatted Bitcoin amount
+    TimeRemaining string // Human-readable time
+    // ...
+}
+```
+
 ## Technical Implementation Patterns
 
 ### Bitcoin Pricing System
@@ -213,6 +260,22 @@ go func() {
     pubsub := redisClient.Subscribe(context.Background(), user.UserCreatedTopic)
     // Handle events...
 }()
+```
+
+### Hypermedia-First Architecture
+- HTML templates with Datastar attributes for reactivity
+- Server-sent events for real-time DOM updates
+- Progressive enhancement without complex frontend state
+- Mobile-optimized merchant workflows
+- Single rendering pipeline (no separate JSON API)
+
+Example template with Datastar:
+```html
+<div data-sse-source="/merchant/orders/stream">
+    <div id="orders-list" data-sse-swap="orders">
+        <!-- Orders updated in real-time -->
+    </div>
+</div>
 ```
 
 ### Error Handling Patterns
@@ -278,6 +341,18 @@ Uses Viper for configuration management:
 - Environment variables take precedence
 - YAML config file fallback (`config.yaml`)
 - Structured configuration binding
+
+### Frontend Infrastructure
+- **Templates**: Go html/template with Datastar enhancement
+- **Real-Time**: Server-sent events (SSE) for live updates
+- **Styling**: Tailwind CSS for responsive design
+- **Assets**: Static file serving with versioning
+- **Development**: Hot reload support for templates
+
+### Development Tools
+- Air: Live reload for Go code and templates
+- Browser DevTools: Datastar debugging panel
+- Template debugging with DEBUG=templates flag
 
 ## Order Fulfillment Architecture
 
