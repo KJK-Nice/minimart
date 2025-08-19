@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"minimart/layouts"
+	"minimart/internal/shared/templates/layouts"
 	"minimart/types"
 )
 

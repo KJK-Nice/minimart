@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"minimart/pages"
+	"minimart/internal/shared/templates/pages"
 	"minimart/types"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,7 +29,7 @@ func main() {
 	}))
 
 	// --- Static File Serving ---
-	app.Static("/static", "./static")
+	app.Static("/static", "./internal/shared/static")
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {

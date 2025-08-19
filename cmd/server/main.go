@@ -10,7 +10,7 @@ import (
 	"minimart/internal/shared/eventbus"
 	middlerware "minimart/internal/shared/middleware"
 	"minimart/internal/user"
-	"minimart/pages"
+	"minimart/internal/shared/templates/pages"
 	"minimart/types"
 	"os"
 
@@ -160,7 +160,7 @@ func main() {
 	}))
 
 	// --- Static File Serving ---
-	app.Static("/static", "./static")
+	app.Static("/static", "./internal/shared/static")
 
 	// --- Initialize Redis Client ---
 	// Parse Redis URL to handle authentication
