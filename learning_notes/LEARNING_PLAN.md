@@ -46,9 +46,9 @@ You can track your progress by checking off the items as you complete them.
 *   [x] **Structuring Your Fiber App:**
     *   [x] Grouping routes (`app.Group`).
     *   [x] Refactoring handlers into separate files (as you've started).
-*   [ ] **Middleware:**
-    *   [ ] Using built-in middleware (e.g., for logging, recovery).
-    *   [ ] Writing your own custom middleware.
+*   [x] **Middleware:**
+    *   [x] Using built-in middleware (e.g., for logging, recovery).
+    *   [x] Writing your own custom middleware.
 
 ## Phase 3: Testing
 
@@ -79,7 +79,7 @@ You can track your progress by checking off the items as you complete them.
 
 *   [x] **Core DDD Concepts:**
     *   [x] **Entities:** Structs with a unique identity (e.g., `User`, `Merchant`, `Order`).
-    *   [ ] **Value Objects:** Structs without a unique identity, defined by their attributes (e.g., `Address`, `Money`).
+    *   [x] **Value Objects:** Structs without a unique identity, defined by their attributes (e.g., `Address`, `Money`).
     *   [x] **Aggregates:** A cluster of domain objects that can be treated as a single unit (e.g., an `Order` with its `OrderItems`).
     *   [x] **Repositories:** Mediate between the domain and data mapping layers (what you have started).
     *   [x] **Usecases/Services:** Encapsulate application-specific business logic (what you have started).
