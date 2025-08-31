@@ -22,7 +22,7 @@ dev: ## Start development server with hot reload
 	@echo "Starting development server..."
 	@echo "Templates will auto-reload on changes"
 	@which air > /dev/null || (echo "Installing Air..." && go install github.com/air-verse/air@latest)
-	air -c .air.toml
+	$$(go env GOPATH)/bin/air -c .air.toml
 
 # Testing
 test: ## Run all tests
